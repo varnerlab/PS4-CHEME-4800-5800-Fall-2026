@@ -14,7 +14,7 @@ IEEE*, **86**(11), 2278–2324.
 | `train-labels.bin` | The digit (0–9) in each training image, in the same order. |
 | `test-images.bin` | All 10,000 MNIST test images. |
 | `test-labels.bin` | The digit (0–9) in each test image, in the same order. |
-| [logbook.csv](logbook.csv) | The 20 readings on the logbook page and the test images used to write them. |
+| [logbook.csv](logbook.csv) | The 20 readings on the logbook page and the testing images used to write them. |
 | [provenance.json](provenance.json) | Where the files came from, with checksums that confirm the original and shipped files are unchanged. |
 
 ## File layout
@@ -34,9 +34,9 @@ You do not need to read these files yourself. `load_digits()` in
 four readings (reactor temperature, reactor pressure, feed flow, and coolant
 temperature) each hour from 06:00 to 10:00. Every reading has exactly four
 digits. The model reads only the digits; any decimal point is copied as it is.
-Columns `image_1` to `image_4` give the row of `data.test.X` used for each digit
-(row 1 is the first test image). Going through the page digit by digit, each
-digit uses the earliest test image of that digit not already used. The
+Columns `image_1` to `image_4` give the row of `data.testing.X` used for each digit
+(row 1 is the first testing image). Going through the page digit by digit, each
+digit uses the earliest testing image of that digit not already used. The
 handwriting on the page is MNIST handwriting, not real operators' handwriting.
 
 ## License

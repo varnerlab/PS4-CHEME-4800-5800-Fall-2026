@@ -1,7 +1,7 @@
 # Supplied loader and trainer checks, separate from the 48 scored student tests.
 # Run: julia --startup-file=no --project=. instructor/test_trainers.jl
 using Test;          # loader and trainer assertions
-using LinearAlgebra; # opnorm for the L9d step size
+using LinearAlgebra; # opnorm for the L9d learning rate
 include(joinpath(@__DIR__, "..", "Include.jl"));
 
 # The L9b and L9d reference solutions, each loaded into its own module -
@@ -21,7 +21,7 @@ end
     d = load_digits();
 
     # Loader: sizes, bias column, pixel range, and labels -
-    for set in (d.training, d.test)
+    for set in (d.training, d.testing)
         @test size(set.X) == (10_000, 785);
         @test set.X isa Matrix{Float64};
         @test all(set.X[:, end] .== 1.0);

@@ -8,7 +8,7 @@
 # ----------------------------------------------------------------------------
 
 using Test;          # record one scored assertion per labeled case
-using LinearAlgebra; # opnorm for the logistic-regression step size
+using LinearAlgebra; # opnorm for the logistic-regression learning rate
 
 Base.include(@__MODULE__, joinpath(@__DIR__, "Include.jl"));
 Base.include(@__MODULE__, joinpath(@__DIR__, "test_support.jl"));
@@ -27,7 +27,7 @@ checks = [
     "labels type and length" => () -> begin
         y = digit_labels([3, 1, 3, 0, 7], 3);
 
-        y isa Vector{Float64} && length(y) == 5
+        y isa Array{Float64,1} && length(y) == 5
     end,
 
     "plus one exactly where the label matches" => () ->
@@ -51,7 +51,7 @@ checks = [
     "empty labels give an empty vector" => () -> begin
         y = digit_labels(Int[], 4);
 
-        y isa Vector{Float64} && isempty(y)
+        y isa Array{Float64,1} && isempty(y)
     end,
 
     "labels unchanged" => () -> begin
@@ -69,11 +69,11 @@ checks = [
         throws_type(() -> digit_labels([1, 12], 1), ArgumentError),
 
     # One model per digit -
-    "weights size" => () ->
+    "parameter matrix size" => () ->
         size(train_digit_models(toy.X, toy.labels; maxiter=5)) == (4, 10),
 
-    "weights type" => () ->
-        train_digit_models(toy.X, toy.labels; maxiter=5) isa Matrix{Float64},
+    "parameter matrix type" => () ->
+        train_digit_models(toy.X, toy.labels; maxiter=5) isa Array{Float64,2},
 
     "logistic column d + 1 is the model for digit d" => () -> isapprox(
         train_digit_models(toy.X, toy.labels; method=:logistic, maxiter=50),
@@ -96,7 +96,7 @@ checks = [
         train_digit_models(toy.X, toy.labels; maxiter=20) ==
         train_digit_models(toy.X, toy.labels; method=:logistic, maxiter=20),
 
-    "maxiter reaches the logistic trainer" => () -> begin
+    "maxiter reaches logistic regression" => () -> begin
         W1 = train_digit_models(toy.X, toy.labels; method=:logistic, maxiter=1);
 
         isapprox(W1, reference_models(toy.X, toy.labels; method=:logistic, maxiter=1); rtol=1e-8) &&

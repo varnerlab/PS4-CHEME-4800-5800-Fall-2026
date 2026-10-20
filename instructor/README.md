@@ -4,7 +4,7 @@ The student task is fixed: build a ten-digit reader for handwritten MNIST digits
 out of ten yes/no models, compare logistic regression with the Perceptron, and
 see how digit errors spoil whole logbook entries. Parts 1–2 require four
 functions (`digit_labels`, `train_digit_models`, `predict_digits`,
-`confusion_table`) and three written responses, graded out of four points using
+`confusion_matrix`) and three written responses, graded out of four points using
 48 tests. There is no Advanced track. The two trainers are supplied: they are the
 L9b Perceptron and the L9d gradient-descent logistic regression, with the lab
 names, arguments, and results. The design is recorded in [DESIGN.md](DESIGN.md)
@@ -16,7 +16,7 @@ because DESIGN.md lists the ideas expected in the answer to question 2.
 - Read [the problem statement](../README.md), [rubric](../RUBRIC.md), and
   [questions](../responses.md).
 - Inspect the reference reports in [reference/](reference/):
-  [confusion table](reference/confusion-table.png),
+  [confusion matrix](reference/confusion-matrix.png),
   [logbook page](reference/logbook-page.png),
   [misread digits](reference/misread-digits.png),
   [weight pictures](reference/digit-weights.png), and the CSV tables.

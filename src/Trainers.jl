@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Supplied trainers | The yes/no classifiers from the L9b and L9d labs.
+# Training functions | The yes/no classifiers from the L9b and L9d labs.
 # ----------------------------------------------------------------------------
 # These are the completed lab functions, with the same names, arguments, and
 # results. Each one trains a single yes/no model: labels are 1 for "yes" and -1

@@ -5,11 +5,11 @@
 """Supplied test inputs and reference calculations for the PS4 student functions."""
 module PS4Checks
 
-using LinearAlgebra; # opnorm for the logistic-regression step size
+using LinearAlgebra; # opnorm for the logistic-regression learning rate
 
 using ..PlantLogbook; # implementation loaded by the current test suite
 
-export throws_type, reference_labels, toy_digits, small_training, test_images, reference_models;
+export throws_type, reference_labels, toy_digits, small_training, testing_images, reference_models;
 
 # ----------------------------------------------------------------------------
 # Test inputs
@@ -19,8 +19,8 @@ export throws_type, reference_labels, toy_digits, small_training, test_images, r
     toy_digits() -> NamedTuple
 
 Build a tiny set of 22 "images" with three pixels each, plus the bias column.
-Return `(X, labels)`: `X` is a new 22 × 4 `Matrix{Float64}` and `labels` a new
-`Vector{Int}` that holds every digit from 0 to 9 at least twice. The pixel values
+Return `(X, labels)`: `X` is a new 22 × 4 `Array{Float64,2}` and `labels` a new
+`Array{Int64,1}` that holds every digit from 0 to 9 at least twice. The pixel values
 follow a fixed formula, so the ten trained models differ from each other.
 """
 function toy_digits()
@@ -50,14 +50,14 @@ end
 
 
 """
-    test_images(n) -> NamedTuple
+    testing_images(n) -> NamedTuple
 
-Return `(X, labels)` with new copies of the first `n` test images and labels.
+Return `(X, labels)` with new copies of the first `n` testing images and labels.
 """
-function test_images(n)
+function testing_images(n)
 
     isnothing(DIGITS[]) && (DIGITS[] = load_digits());
-    data = DIGITS[].test;
+    data = DIGITS[].testing;
 
     return (X = data.X[1:n, :], labels = data.labels[1:n]);
 end
@@ -68,7 +68,7 @@ end
 # ----------------------------------------------------------------------------
 
 """
-    reference_labels(labels, d) -> Vector{Float64}
+    reference_labels(labels, d) -> Array{Float64,1}
 
 Return 1.0 where `labels` equals `d` and -1.0 elsewhere, without checking inputs.
 """
@@ -76,9 +76,9 @@ reference_labels(labels, d) = [label == d ? 1.0 : -1.0 for label in labels];
 
 
 """
-    reference_models(X, labels; method=:logistic, maxiter) -> Matrix{Float64}
+    reference_models(X, labels; method=:logistic, maxiter) -> Array{Float64,2}
 
-Train one model per digit with direct calls to the supplied trainers and return
+Train one model per digit with direct calls to the training functions and return
 the `size(X, 2)` × 10 matrix with the model for digit `d` in column `d + 1`.
 Logistic regression uses `α = 1/opnorm(X)^2`, as the README specifies.
 """

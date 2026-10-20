@@ -15,7 +15,7 @@ from build_student_package import ROOT, student_files
 
 LOGS = ROOT / "instructor/validation-output"
 LOGS.mkdir(exist_ok=True)
-REPORTS = {"accuracy.csv", "confusion-table.csv", "confusion-table.png", "digit-weights.png",
+REPORTS = {"accuracy.csv", "confusion-matrix.csv", "confusion-matrix.png", "digit-weights.png",
            "misread-digits.png", "logbook-page.csv", "logbook-page.png", "logbook-summary.csv"}
 
 def stage(reference=False):
@@ -121,12 +121,12 @@ partial = stage()
 source = (ROOT / "solution/src/Compute.jl").read_text()
 start = source.index("function predict_digits")
 stop = source.index("# ----------------------------------------------------------------------------\n# Part 2b")
-source = (source[:start] + 'function predict_digits(W::AbstractMatrix{<:Real}, X::AbstractMatrix{<:Real})\n'
+source = (source[:start] + 'function predict_digits(W::Array{Float64,2}, X::Array{Float64,2})\n'
           '    error("unfinished predictions");\nend\n\n\n' + source[stop:])
 (partial / "src/Compute.jl").write_text(source)
 # Earlier reports must not survive a failing run; other files in outputs/ stay.
 (partial / "outputs").mkdir()
-for name in ("confusion-table.png", "logbook-summary.csv", "notes.txt"):
+for name in ("confusion-matrix.png", "logbook-summary.csv", "notes.txt"):
     (partial / "outputs" / name).write_text("stale")
 output = run(partial, "partial-checker", 1)
 assert [p.name for p in (partial / "outputs").iterdir()] == ["notes.txt"]

@@ -102,7 +102,7 @@ issues = discussion_issues(RESPONSE_PATH);
 required_passed = all(name -> statuses[name] == "all tests passed", required_suites);
 # Remove earlier reports so outputs/ holds only results from the code just checked -
 # (instructor/validate.py checks that this list matches LogbookReports.REPORT_FILES)
-for name in ("accuracy.csv", "confusion-table.csv", "confusion-table.png", "digit-weights.png",
+for name in ("accuracy.csv", "confusion-matrix.csv", "confusion-matrix.png", "digit-weights.png",
         "misread-digits.png", "logbook-page.csv", "logbook-page.png", "logbook-summary.csv")
     rm(joinpath(CHECK_ROOT, "outputs", name); force=true);
 end

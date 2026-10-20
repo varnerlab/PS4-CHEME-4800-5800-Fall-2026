@@ -14,7 +14,9 @@ PS4 is worth a maximum of **4 points**: Parts 1–2 and questions 1–3 in
 
 Run `check_submission.jl` to see your test results and find unanswered
 questions. Passing all the tests and the checker does not by itself earn a 4; the
-instructor reads and grades your answers.
+instructor reads and grades your answers. An answer is satisfactory when it
+answers every part of the question, gives the numbers it uses, and its reasoning
+is correct.
 
 To grade, the instructor copies your `src/Compute.jl`, any helper files, and
 `Include.jl` into a clean copy of the assignment, reruns the tests, and then

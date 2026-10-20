@@ -22,7 +22,7 @@ REQUIRED_FILES = set(ROOT_FILES) | {
     "data/test-images.bin", "data/test-labels.bin",
 }
 ALLOWED_EXTRA = {".gitattributes", ".gitignore"}
-REPORTS = ("accuracy.csv", "confusion-table.png", "logbook-summary.csv")
+REPORTS = ("accuracy.csv", "confusion-matrix.png", "logbook-summary.csv")
 
 
 def require(condition, message):

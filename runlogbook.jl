@@ -8,7 +8,7 @@
 # The --solution flag loads the reference code and writes solution/outputs/.
 #
 # After Parts 1 and 2 are complete, train logistic regression and the Perceptron
-# on the training images, read the test images, and write the plots and tables
+# on the training images, read the testing images, and write the plots and tables
 # to outputs/. Existing files with the same names are overwritten.
 
 
@@ -26,7 +26,7 @@ output_directory = "--solution" in ARGS ?
 "--solution" in ARGS && println("Running the instructor reference solution.");
 
 
-# 3. Train, read the test images, and write the reports -
+# 3. Train, read the testing images, and write the reports -
 try
     LogbookReports.write_outputs(PlantLogbook, output_directory);
 catch caught
