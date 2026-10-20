@@ -1,0 +1,21 @@
+time,quantity,unit,value,image_1,image_2,image_3,image_4
+06:00,Reactor temperature,K,342.5,19,5,2,9
+06:00,Reactor pressure,kPa,1013,3,4,6,31
+06:00,Feed flow,L/h,1840,15,62,7,11
+06:00,Coolant temperature,K,298.4,36,8,85,20
+07:00,Reactor temperature,K,345.1,33,25,16,30
+07:00,Reactor pressure,kPa,1027,32,14,39,1
+07:00,Feed flow,L/h,1835,38,111,45,24
+07:00,Coolant temperature,K,297.9,44,10,18,13
+08:00,Reactor temperature,K,348.6,52,28,129,12
+08:00,Reactor pressure,kPa,1046,40,26,34,22
+08:00,Feed flow,L/h,1852,41,135,46,48
+08:00,Coolant temperature,K,298.7,73,17,147,27
+09:00,Reactor temperature,K,351.2,64,53,47,78
+09:00,Reactor pressure,kPa,1069,58,29,23,21
+09:00,Feed flow,L/h,1861,75,178,51,90
+09:00,Coolant temperature,K,299.3,83,59,63,69
+10:00,Reactor temperature,K,347.8,77,43,35,180
+10:00,Reactor pressure,kPa,1054,95,56,54,49
+10:00,Feed flow,L/h,1829,97,182,107,74
+10:00,Coolant temperature,K,298.1,120,79,185,108

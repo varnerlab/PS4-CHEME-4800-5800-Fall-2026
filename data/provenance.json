@@ -1,0 +1,43 @@
+{
+  "dataset": "MNIST database of handwritten digits",
+  "dataset_page": "http://yann.lecun.com/exdb/mnist/",
+  "creators": [
+    "Yann LeCun",
+    "Corinna Cortes",
+    "Christopher J. C. Burges"
+  ],
+  "citation": {
+    "authors": [
+      "Yann LeCun",
+      "Léon Bottou",
+      "Yoshua Bengio",
+      "Patrick Haffner"
+    ],
+    "title": "Gradient-based learning applied to document recognition",
+    "journal": "Proceedings of the IEEE",
+    "year": 1998,
+    "volume": 86,
+    "issue": 11,
+    "pages": "2278-2324",
+    "doi": "10.1109/5.726791"
+  },
+  "license": "Creative Commons Attribution-Share Alike 3.0 (CC BY-SA 3.0), https://creativecommons.org/licenses/by-sa/3.0/",
+  "license_source": "The dataset page has no license statement. The Keras MNIST loader documentation (https://github.com/keras-team/keras/blob/master/keras/src/datasets/mnist.py) states: Yann LeCun and Corinna Cortes hold the copyright of MNIST dataset, which is a derivative work from original NIST datasets. MNIST dataset is made available under the terms of the Creative Commons Attribution-Share Alike 3.0 license.",
+  "download_mirror": "https://storage.googleapis.com/cvdf-datasets/mnist/",
+  "source_sha256": {
+    "train-images-idx3-ubyte.gz": "440fcabf73cc546fa21475e81ea370265605f56be210a4024d2ca8f203523609",
+    "train-labels-idx1-ubyte.gz": "3552534a0a558bbed6aed32b30c495cca23d567ec52cac8be1a0730e8010255c",
+    "t10k-images-idx3-ubyte.gz": "8d422c7b0a1c1c79245a5bcf07fe86e33eeafee792b84584aec276f5a2dbc4e6",
+    "t10k-labels-idx1-ubyte.gz": "f7ae60f92e00ec6debd23a6088c31dbd2371eca3ffa0defaefb259924204aec6"
+  },
+  "selection": "first 10,000 official training images and labels; all 10,000 official test images and labels",
+  "format": "raw bytes; images are 784 bytes each (28 rows of 28 pixels, row by row, 0 = white, 255 = black ink), stored back to back; labels are one byte (0-9) per image, in the same order",
+  "logbook": "data/logbook.csv lists 20 four-digit readings; for each digit, in entry order, the first unused test image with that label (image numbers start at 1)",
+  "shipped_sha256": {
+    "train-images.bin": "2f7182bf021ffc5c1f62db987487f14d899b5c639f421a80f3095affc09a7db2",
+    "train-labels.bin": "2f345bad07338ec537641465e169cc4b7288a44244f251211c7f842641e7d927",
+    "test-images.bin": "6d87418db22cc8025d05968bec9bd5c3932904b23485740db143a061a2c9d161",
+    "test-labels.bin": "ddeff807876a9661a1110d45c266c86239a3a1b7d37da0c3716a7a683c852ff5",
+    "logbook.csv": "c4d0d2946b439d3016fd6fe4f8f65f7ab2574f6a75312cb81b36e0db854247ad"
+  }
+}

@@ -1,0 +1,23 @@
+The handwritten-digit images and labels in data/ (train-images.bin,
+train-labels.bin, test-images.bin, and test-labels.bin) are a subset of the
+MNIST database of handwritten digits.
+
+Dataset: MNIST database of handwritten digits
+Creators: Yann LeCun, Corinna Cortes, and Christopher J. C. Burges
+Dataset page: http://yann.lecun.com/exdb/mnist/
+Citation: LeCun, Y., Bottou, L., Bengio, Y., and Haffner, P. (1998).
+  Gradient-based learning applied to document recognition. Proceedings of the
+  IEEE, 86(11), 2278-2324. https://doi.org/10.1109/5.726791
+
+License: Yann LeCun and Corinna Cortes hold the copyright of the MNIST dataset,
+which is a derivative work from original NIST datasets. The MNIST dataset is
+made available under the terms of the Creative Commons Attribution-Share Alike
+3.0 license (https://creativecommons.org/licenses/by-sa/3.0/). This statement is
+taken from the Keras MNIST loader documentation; the dataset page itself has no
+license statement.
+
+Changes: PS4 keeps the first 10,000 training images and all 10,000 test images,
+and stores them as raw bytes instead of the original IDX files. The selected
+images and labels are otherwise unchanged. data/logbook.csv only lists test
+image numbers. These data files are shared under the same CC BY-SA 3.0 license.
+The code in this repository is under the MIT license in LICENSE.
