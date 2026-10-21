@@ -174,7 +174,7 @@ function my_logistic_regression(X::Array{<:Number,2}, y::Array{<:Number,1}; α::
     if !(α > 0 && β > 0 && ϵ > 0)
         throw(ArgumentError("α, β, and ϵ must be positive"))
     end
-    if δ < 0
+    if !(δ >= 0) # written this way so that δ = NaN is also rejected
         throw(ArgumentError("δ must be at least zero"))
     end
     if maxiter < 1

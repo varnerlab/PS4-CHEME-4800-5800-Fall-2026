@@ -57,7 +57,7 @@ passes the **score** $\hat{\mathbf{x}}^{\top}\mathbf{\theta}$ through an
 activation function $\sigma$:
 
 - **Perceptron (L9a):** $\sigma(z)=\texttt{sign}(z)$, so the estimated label is
-  $\hat{y}=\texttt{sign}\left(\hat{\mathbf{x}}^{\top}\mathbf{\theta}\right)=\pm 1$.
+  $\hat{y}=\texttt{sign}\left(\hat{\mathbf{x}}^{\top}\mathbf{\theta}\right)$: $+1$ for a positive score and $-1$ for a negative one.
 - **Logistic regression (L9c):** $\sigma(z)=1/\left(1+e^{-z}\right)$, the logistic
   function, so the probability that the image is a $d$ is
   $P_{\mathbf{\theta}}(y=1\mid\hat{\mathbf{x}})=\sigma\left(2\beta\hat{\mathbf{x}}^{\top}\mathbf{\theta}\right)$,

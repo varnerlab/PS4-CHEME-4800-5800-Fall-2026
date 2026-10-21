@@ -8,7 +8,6 @@ import argparse
 import hashlib
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import tempfile
 import zipfile
@@ -104,7 +103,8 @@ def main():
 
         # The supplied loader and trainers must work with the shipped data and environment -
         (student / "instructor").mkdir()
-        shutil.copy2(ROOT / "instructor/test_trainers.jl", student / "instructor")
+        test_trainers = git("show", f"{arguments.ref}:instructor/test_trainers.jl") # the committed copy
+        (student / "instructor/test_trainers.jl").write_text(test_trainers + "\n", encoding="utf-8")
         code, output = run_julia(student, "instructor/test_trainers.jl")
         require(code == 0, f"Loader and trainer checks failed:\n{output[-8000:]}")
         print("Loader and trainer checks passed.", flush=True)

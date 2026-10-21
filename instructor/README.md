@@ -85,8 +85,7 @@ copy: this machine also has Fashion-MNIST files with the same names.
 
 ## Reference results
 
-The reference numbers (accuracies, most-confused pairs, logbook results, and
-timing) are in the Git-ignored [solution README](../solution/README.md). They are
+The reference numbers (accuracies, most-confused pairs, and logbook results) are in the Git-ignored [solution README](../solution/README.md). They are
 the numbers students report, so they stay off GitHub until the reference solution
 is released.
 

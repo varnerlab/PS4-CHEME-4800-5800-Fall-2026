@@ -99,7 +99,15 @@ for filename in required_suites
 end
 
 issues = discussion_issues(RESPONSE_PATH);
-required_passed = all(name -> statuses[name] == "all tests passed", required_suites);
+
+# Both required test scripts must pass before the reports are made -
+required_passed = true;
+for name in required_suites
+    if statuses[name] != "all tests passed"
+        global required_passed = false;
+    end
+end
+
 # Remove earlier reports so outputs/ holds only results from the code just checked -
 # (instructor/validate.py checks that this list matches LogbookReports.REPORT_FILES)
 for name in ("accuracy.csv", "confusion-matrix.csv", "confusion-matrix.png", "digit-weights.png",
@@ -127,29 +135,36 @@ ready = required_passed && report_status == "plots and data tables generated" &&
 # Record the test status and fingerprint every submitted source file -
 files = [joinpath(@__DIR__, "Include.jl"), RESPONSE_PATH];
 for (directory, _, filenames) in walkdir(joinpath(@__DIR__, "src"))
-    # Fingerprint the implementation actually loaded, including in solution mode -
-    append!(files, [joinpath(directory, name) == joinpath(@__DIR__, "src", "Compute.jl") ?
-        COMPUTE_PATH : joinpath(directory, name) for name in filenames]);
-end
-open(joinpath(CHECK_ROOT, "MANIFEST.txt"), "w") do io
-    println(io, SOLUTION_MODE ? "PS4 instructor reference solution manifest" :
-        "PS4 CHEME 4800/5800 Fall 2026 submission manifest");
-    println(io, "Generated: ", Dates.now());
-    for name in sort(collect(keys(statuses)))
-        println(io, name, ": ", statuses[name]);
-    end
-    println(io, "Outputs: ", report_status);
-    println(io, "Discussion: ", isempty(issues) ? "no unanswered prompts detected; instructor review required" : join(issues, "; "));
-    println(io, "Required work: ", ready ? "checks passed; instructor review required" : "WORK NEEDS ATTENTION");
-    for path in sort(files)
-        relative = replace(relpath(path, @__DIR__), '\\' => '/');
-        try
-            println(io, bytes2hex(open(sha256, path)), "  ", relative);
-        catch
-            println(io, "MISSING OR UNREADABLE  ", relative);
+    for name in filenames
+        file_path = joinpath(directory, name);
+        # Fingerprint the implementation actually loaded, including in solution mode -
+        if file_path == joinpath(@__DIR__, "src", "Compute.jl")
+            file_path = COMPUTE_PATH;
         end
+        push!(files, file_path);
     end
 end
+io = open(joinpath(CHECK_ROOT, "MANIFEST.txt"), "w");
+println(io, SOLUTION_MODE ? "PS4 instructor reference solution manifest" :
+    "PS4 CHEME 4800/5800 Fall 2026 submission manifest");
+println(io, "Generated: ", Dates.now());
+for name in sort(collect(keys(statuses)))
+    println(io, name, ": ", statuses[name]);
+end
+println(io, "Outputs: ", report_status);
+println(io, "Discussion: ", isempty(issues) ? "no unanswered prompts detected; instructor review required" : join(issues, "; "));
+println(io, "Required work: ", ready ? "checks passed; instructor review required" : "WORK NEEDS ATTENTION");
+for path in sort(files)
+    relative = replace(relpath(path, @__DIR__), '\\' => '/');
+    try
+        stream = open(path);
+        println(io, bytes2hex(sha256(stream)), "  ", relative); # the file's SHA-256 fingerprint
+        close(stream);
+    catch
+        println(io, "MISSING OR UNREADABLE  ", relative);
+    end
+end
+close(io);
 
 println("\nSubmission summary");
 for name in sort(collect(keys(statuses)))
