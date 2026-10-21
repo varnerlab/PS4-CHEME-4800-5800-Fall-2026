@@ -51,60 +51,113 @@ function write_outputs(assignment, directory)
     assignment.predict_digits(zeros(2, 10), zeros(1, 2));
     assignment.confusion_matrix([0], [0]);
 
-    # Train both readers on the training images -
+    # Load the images -
     mkpath(directory);
     data = assignment.load_digits();
-    training, testing = data.training, data.testing;
-    W = Dict{Symbol,Array{Float64,2}}();
-    for (method, name, steps, unit) in ((:logistic, "logistic regression", LOGISTIC_STEPS, "steps"),
-                                        (:perceptron, "the Perceptron", PERCEPTRON_PASSES, "passes"))
-        println("Training $name ($steps $unit for each of the 10 digits) on ",
-            size(training.X, 1), " images. This can take a minute.");
-        seconds = @elapsed W[method] = assignment.train_digit_models(training.X, training.labels;
-            method=method, maxiter=steps);
-        size(W[method]) == (size(training.X, 2), 10) ||
-            error("train_digit_models must return a $(size(training.X, 2)) × 10 matrix, not $(size(W[method]))");
-        @printf("  done in %.1f s\n", seconds);
-    end
+    training = data.training;
+    testing = data.testing;
+    number_of_rows = size(training.X, 2);           # rows of W: one per column of X
+    number_of_images = length(testing.labels);      # testing images to read
+
+    # Train logistic regression on the training images -
+    println("Training logistic regression ($LOGISTIC_STEPS steps for each of the 10 digits) on ",
+        size(training.X, 1), " images. This can take a minute.");
+    start = time(); # the clock time, in seconds, when training starts
+    W_logistic = assignment.train_digit_models(training.X, training.labels;
+        method=:logistic, maxiter=LOGISTIC_STEPS);
+    check_parameters(W_logistic, number_of_rows);
+    @printf("  done in %.1f s\n", time() - start);
+
+    # Train the Perceptron on the training images -
+    println("Training the Perceptron ($PERCEPTRON_PASSES passes for each of the 10 digits) on ",
+        size(training.X, 1), " images. This can take a minute.");
+    start = time();
+    W_perceptron = assignment.train_digit_models(training.X, training.labels;
+        method=:perceptron, maxiter=PERCEPTRON_PASSES);
+    check_parameters(W_perceptron, number_of_rows);
+    @printf("  done in %.1f s\n", time() - start);
 
     # Read the testing images with both readers -
-    predicted = Dict(method => assignment.predict_digits(W[method], testing.X) for method in keys(W));
-    for method in keys(W)
-        length(predicted[method]) == length(testing.labels) ||
-            error("predict_digits must return one digit per testing image");
+    predicted_logistic = assignment.predict_digits(W_logistic, testing.X);
+    predicted_perceptron = assignment.predict_digits(W_perceptron, testing.X);
+    if length(predicted_logistic) != number_of_images || length(predicted_perceptron) != number_of_images
+        error("predict_digits must return one digit per testing image");
     end
-    CM = Dict(method => assignment.confusion_matrix(testing.labels, predicted[method]) for method in keys(W));
-    for method in keys(W)
-        size(CM[method]) == (10, 10) && sum(CM[method]) == length(testing.labels) ||
-            error("confusion_matrix must return a 10 × 10 matrix that counts every testing image");
-    end
+
+    # Count the mix-ups of both readers -
+    CM_logistic = assignment.confusion_matrix(testing.labels, predicted_logistic);
+    CM_perceptron = assignment.confusion_matrix(testing.labels, predicted_perceptron);
+    check_confusion(CM_logistic, number_of_images);
+    check_confusion(CM_perceptron, number_of_images);
 
     # Write the reports -
-    write_accuracy(directory, testing.labels, predicted);
-    write_confusion(directory, CM[:logistic]);
-    write_weights(directory, W[:logistic]);
-    write_misread(directory, testing, predicted[:logistic], CM[:logistic]);
-    page = write_logbook(directory, testing, predicted[:logistic]);
-    summary = write_summary(directory, testing.labels, predicted[:logistic]);
+    write_accuracy(directory, testing.labels, predicted_logistic, predicted_perceptron);
+    write_confusion(directory, CM_logistic);
+    write_weights(directory, W_logistic);
+    write_misread(directory, testing, predicted_logistic, CM_logistic);
+    page = write_logbook(directory, testing, predicted_logistic);
+    summary = write_summary(directory, testing.labels, predicted_logistic);
+
+    # Compute both testing accuracies -
+    correct_logistic = count(predicted_logistic .== testing.labels);
+    correct_perceptron = count(predicted_perceptron .== testing.labels);
+    accuracy_logistic = correct_logistic / number_of_images;
+    accuracy_perceptron = correct_perceptron / number_of_images;
 
     # Print what the reports show -
-    accuracy(method) = count(predicted[method] .== testing.labels) / length(testing.labels);
     println();
     @printf("Testing accuracy, logistic regression: %.4f (%d of %d digits)\n",
-        accuracy(:logistic), count(predicted[:logistic] .== testing.labels), length(testing.labels));
+        accuracy_logistic, correct_logistic, number_of_images);
     @printf("Testing accuracy, Perceptron:          %.4f (%d of %d digits)\n",
-        accuracy(:perceptron), count(predicted[:perceptron] .== testing.labels), length(testing.labels));
+        accuracy_perceptron, correct_perceptron, number_of_images);
     @printf("Four-digit logbook entries read correctly: %.4f (%d of %d entries)\n",
         summary.entry_accuracy, summary.entries_correct, summary.entries);
     println("\nLogbook page, read by logistic regression:");
     for row in page
+        if row.match
+            note = "";
+        else
+            note = "  <- misread";
+        end
         @printf("  %s  %-20s  true %6s %-3s  read %6s %-3s%s\n", row.time, row.quantity,
-            row.value, row.unit, row.read, row.unit, row.match ? "" : "  <- misread");
+            row.value, row.unit, row.read, row.unit, note);
     end
     println("\nWrote the plots and tables to ", abspath(directory));
 
-    return (logistic = accuracy(:logistic), perceptron = accuracy(:perceptron),
+    return (logistic = accuracy_logistic, perceptron = accuracy_perceptron,
         digit_accuracy = summary.digit_accuracy, entry_accuracy = summary.entry_accuracy);
+end
+
+
+# ----------------------------------------------------------------------------
+# Checks on the student results
+# ----------------------------------------------------------------------------
+
+"""
+    check_parameters(W, number_of_rows)
+
+Throw an `ErrorException` unless `W`, returned by `train_digit_models`, has
+`number_of_rows` rows and 10 columns.
+"""
+function check_parameters(W, number_of_rows)
+
+    if size(W) != (number_of_rows, 10)
+        error("train_digit_models must return a $number_of_rows × 10 matrix, not $(size(W))");
+    end
+end
+
+
+"""
+    check_confusion(CM, number_of_images)
+
+Throw an `ErrorException` unless `CM`, returned by `confusion_matrix`, is 10 × 10
+and counts all `number_of_images` testing images.
+"""
+function check_confusion(CM, number_of_images)
+
+    if size(CM) != (10, 10) || sum(CM) != number_of_images
+        error("confusion_matrix must return a 10 × 10 matrix that counts every testing image");
+    end
 end
 
 
@@ -112,43 +165,90 @@ end
 # Tables
 # ----------------------------------------------------------------------------
 
-"""Write accuracy.csv: correct readings for each method, overall and for each digit."""
-function write_accuracy(directory, labels, predicted)
+"""
+    write_accuracy(directory, labels, predicted_logistic, predicted_perceptron)
 
-    open(joinpath(directory, "accuracy.csv"), "w") do io
-        println(io, "method,digit,correct,total,accuracy");
-        for method in (:logistic, :perceptron)
-            correct = predicted[method] .== labels;
-            @printf(io, "%s,all,%d,%d,%.4f\n", method, count(correct), length(labels), count(correct) / length(labels));
-            for d in 0:9
-                mask = labels .== d;
-                @printf(io, "%s,%d,%d,%d,%.4f\n", method, d, count(correct .& mask), count(mask),
-                    count(correct .& mask) / count(mask));
+Write accuracy.csv: the correct readings of each method, for all testing images and
+for each digit.
+"""
+function write_accuracy(directory, labels, predicted_logistic, predicted_perceptron)
+
+    io = open(joinpath(directory, "accuracy.csv"), "w");
+    println(io, "method,digit,correct,total,accuracy");
+    write_accuracy_rows(io, "logistic", labels, predicted_logistic);
+    write_accuracy_rows(io, "perceptron", labels, predicted_perceptron);
+    close(io);
+end
+
+
+"""
+    write_accuracy_rows(io, method, labels, predicted)
+
+Write the accuracy.csv rows for one method to the open file `io`: one row for all
+testing images, then one row for each digit from 0 to 9.
+"""
+function write_accuracy_rows(io, method, labels, predicted)
+
+    # All testing images -
+    correct = count(predicted .== labels);
+    total = length(labels);
+    @printf(io, "%s,all,%d,%d,%.4f\n", method, correct, total, correct / total);
+
+    # Each digit: count its images, and how many of them were read correctly -
+    for d in 0:9
+        total = 0;   # images of digit d
+        correct = 0; # images of digit d read as d
+        for i in 1:length(labels)
+            if labels[i] == d
+                total += 1;
+                if predicted[i] == d
+                    correct += 1;
+                end
             end
         end
+        @printf(io, "%s,%d,%d,%d,%.4f\n", method, d, correct, total, correct / total);
     end
 end
 
 
-"""Write logbook-summary.csv: digit accuracy and four-digit entry accuracy on the testing set."""
+"""
+    write_summary(directory, labels, predicted) -> NamedTuple
+
+Write logbook-summary.csv: digit accuracy and four-digit entry accuracy on the
+testing set. Each entry is four consecutive testing images, and it counts as correct
+only when all four digits are read correctly. Return the numbers as a named tuple.
+"""
 function write_summary(directory, labels, predicted)
 
-    correct = predicted .== labels;
-    entries = length(labels) ÷ ENTRY_DIGITS; # consecutive testing images, four at a time
-    entries_correct = count(all(correct[(ENTRY_DIGITS * (k - 1) + 1):(ENTRY_DIGITS * k)]) for k in 1:entries);
-    summary = (digits = length(labels), digits_correct = count(correct),
-        digit_accuracy = count(correct) / length(labels), entries = entries,
+    # Single digits -
+    digits = length(labels);
+    digits_correct = count(predicted .== labels);
+
+    # Four-digit entries: images 1 to 4 are entry 1, images 5 to 8 are entry 2, and so on -
+    entries = div(length(labels), ENTRY_DIGITS); # whole entries only
+    entries_correct = 0;
+    for k in 1:entries
+        first_image = ENTRY_DIGITS * (k - 1) + 1; # the first image of entry k
+        last_image = ENTRY_DIGITS * k;            # the last image of entry k
+        if predicted[first_image:last_image] == labels[first_image:last_image]
+            entries_correct += 1;
+        end
+    end
+
+    summary = (digits = digits, digits_correct = digits_correct,
+        digit_accuracy = digits_correct / digits, entries = entries,
         entries_correct = entries_correct, entry_accuracy = entries_correct / entries);
 
-    open(joinpath(directory, "logbook-summary.csv"), "w") do io
-        println(io, "measure,value");
-        println(io, "digits_read,", summary.digits);
-        println(io, "digits_correct,", summary.digits_correct);
-        @printf(io, "digit_accuracy,%.4f\n", summary.digit_accuracy);
-        println(io, "entries_read,", summary.entries);
-        println(io, "entries_correct,", summary.entries_correct);
-        @printf(io, "entry_accuracy,%.4f\n", summary.entry_accuracy);
-    end
+    # Write the table -
+    io = open(joinpath(directory, "logbook-summary.csv"), "w");
+    println(io, "measure,value");
+    println(io, "digits_read,", summary.digits);
+    println(io, "digits_correct,", summary.digits_correct);
+    @printf(io, "digit_accuracy,%.4f\n", summary.digit_accuracy);
+    println(io, "entries_read,", summary.entries);
+    println(io, "entries_correct,", summary.entries_correct);
+    @printf(io, "entry_accuracy,%.4f\n", summary.entry_accuracy);
+    close(io);
 
     return summary;
 end
@@ -158,57 +258,109 @@ end
 # Pictures
 # ----------------------------------------------------------------------------
 
-"""Return image `i` of `X` as a 28 × 28 picture, top row first."""
-picture(X, i) = permutedims(reshape(X[i, 1:784], 28, 28));
-
 const INK = cgrad([:white, :black]); # 0 is white paper, 1 is black ink
 
-"""Draw one picture with no axes; `title` goes above it."""
+"""
+    picture(X, i) -> Array{Float64,2}
+
+Return image `i`, row `i` of `X`, as a 28 × 28 picture, top row first.
+"""
+function picture(X, i)
+
+    pixels = X[i, 1:784]; # drop the 1 for the bias
+    return permutedims(reshape(pixels, 28, 28));
+end
+
+
+"""
+    draw(img; title="", titlecolor=:black, clims=(0, 1), color=INK)
+
+Draw one picture with no axes; `title` goes above it. `clims` sets the values shown
+as the two ends of the color scale `color`.
+"""
 function draw(img; title="", titlecolor=:black, clims=(0, 1), color=INK)
+
     return heatmap(img; yflip=true, color=color, clims=clims, aspect_ratio=:equal,
         axis=false, ticks=false, colorbar=false, framestyle=:none, title=title,
         titlefontsize=9, titlefontcolor=titlecolor);
 end
 
 
-"""Write confusion-matrix.csv and confusion-matrix.png for logistic regression."""
+"""
+    write_confusion(directory, CM)
+
+Write confusion-matrix.csv and confusion-matrix.png for logistic regression.
+"""
 function write_confusion(directory, CM)
 
-    open(joinpath(directory, "confusion-matrix.csv"), "w") do io
-        println(io, "true_digit,", join(("read_as_$d" for d in 0:9), ","));
-        for a in 0:9
-            println(io, a, ",", join(CM[a + 1, :], ","));
+    # Write the table: one row per true digit, one column per digit read -
+    io = open(joinpath(directory, "confusion-matrix.csv"), "w");
+    header = "true_digit";
+    for d in 0:9
+        header = header * ",read_as_$d";
+    end
+    println(io, header);
+    for a in 0:9
+        println(io, a, ",", join(CM[a + 1, :], ","));
+    end
+    close(io);
+
+    # Find the largest mix-up: the largest count off the diagonal -
+    largest = 0;
+    for a in 1:10
+        for p in 1:10
+            if a != p && CM[a, p] > largest
+                largest = CM[a, p];
+            end
         end
     end
 
     # Shade by count, capped at the largest mix-up so the mix-ups stand out -
-    largest = maximum(CM[a, p] for a in 1:10, p in 1:10 if a != p);
+    shade = min.(CM, largest); # every count above largest is shaded as largest
     theme(:default);
-    p = heatmap(0:9, 0:9, min.(CM, largest); yflip=true, color=:Blues, clims=(0, largest),
+    figure = heatmap(0:9, 0:9, shade; yflip=true, color=:Blues, clims=(0, largest),
         aspect_ratio=:equal, xticks=0:9, yticks=0:9, xlabel="Digit the model read",
         ylabel="True digit", title="Confusion matrix (logistic regression, testing images)",
         titlefontsize=11, colorbar_title="count (mix-ups)", size=(720, 620));
-    for a in 0:9, r in 0:9
-        n = CM[a + 1, r + 1];
-        annotate!(p, r, a, text(string(n), 8, n >= 0.6 * largest ? :white : :black));
+
+    # Write each count on its cell: white text on dark cells, black text on light cells -
+    for a in 0:9
+        for r in 0:9
+            n = CM[a + 1, r + 1];
+            if n >= 0.6 * largest
+                text_color = :white;
+            else
+                text_color = :black;
+            end
+            annotate!(figure, r, a, text(string(n), 8, text_color));
+        end
     end
-    savefig(p, joinpath(directory, "confusion-matrix.png"));
+    savefig(figure, joinpath(directory, "confusion-matrix.png"));
 end
 
 
-"""Write digit-weights.png: each digit's 784 pixel weights drawn as a 28 × 28 picture."""
+"""
+    write_weights(directory, W)
+
+Write digit-weights.png: each digit's 784 pixel weights drawn as a 28 × 28 picture.
+"""
 function write_weights(directory, W)
 
-    panels = map(0:9) do d
-        img = permutedims(reshape(W[1:784, d + 1], 28, 28));
-        limit = maximum(abs, img);
-        draw(img; title="Weights for digit $d", color=:RdBu, clims=(-limit, limit));
+    # Draw one panel per digit -
+    panels = [];
+    for d in 0:9
+        weights = W[1:784, d + 1]; # column d + 1 holds digit d; drop the bias
+        img = permutedims(reshape(weights, 28, 28));
+        limit = maximum(abs.(img)); # the largest weight, positive or negative, sets the color scale
+        push!(panels, draw(img; title="Weights for digit $d", color=:RdBu, clims=(-limit, limit)));
     end
+
+    # Put the ten panels in two rows of five; panels... passes each panel to plot -
     theme(:default);
-    p = plot(panels...; layout=(2, 5), size=(1000, 460),
+    figure = plot(panels...; layout=(2, 5), size=(1000, 460),
         plot_title="Logistic regression weights (blue: ink here raises the score; red: lowers it)",
         plot_titlefontsize=11);
-    savefig(p, joinpath(directory, "digit-weights.png"));
+    savefig(figure, joinpath(directory, "digit-weights.png"));
 end
 
 
@@ -221,61 +373,122 @@ showing the first four testing images with that mix-up.
 """
 function write_misread(directory, testing, predicted, CM)
 
-    mixups = sort([(CM[a + 1, r + 1], a, r) for a in 0:9 for r in 0:9 if a != r];
-        by = m -> (-m[1], m[2], m[3]))[1:6];
-    panels = Any[];
-    for (n, a, r) in mixups
-        shown = findall((testing.labels .== a) .& (predicted .== r))[1:min(4, n)];
-        append!(panels, [draw(picture(testing.X, i); title="true $a, read $r") for i in shown]);
-        append!(panels, [plot(; framestyle=:none) for _ in (length(shown) + 1):4]); # pad a short row
+    # Find the six most common mix-ups. Copy the counts and mark the diagonal (the
+    # correct readings) with -1, then take the largest count six times. The search
+    # goes row by row, so a tie goes to the smaller true digit, then the smaller digit read -
+    counts = copy(CM);
+    for k in 1:10
+        counts[k, k] = -1;
     end
+    mixup_true = zeros(Int, 6); # the true digit of each mix-up, most common first
+    mixup_read = zeros(Int, 6); # the digit it was read as
+    for m in 1:6
+        best = -1;
+        for a in 0:9
+            for r in 0:9
+                if counts[a + 1, r + 1] > best
+                    best = counts[a + 1, r + 1];
+                    mixup_true[m] = a;
+                    mixup_read[m] = r;
+                end
+            end
+        end
+        counts[mixup_true[m] + 1, mixup_read[m] + 1] = -1; # do not pick this mix-up again
+    end
+
+    # Draw the first four testing images of each mix-up, one row per mix-up -
+    panels = [];
+    for m in 1:6
+        a = mixup_true[m];
+        r = mixup_read[m];
+        shown = 0; # images drawn in this row so far
+        for i in 1:length(testing.labels)
+            if shown < 4 && testing.labels[i] == a && predicted[i] == r
+                push!(panels, draw(picture(testing.X, i); title="true $a, read $r"));
+                shown += 1;
+            end
+        end
+
+        # Fill a short row with blank panels, so every row has four -
+        while shown < 4
+            push!(panels, plot(framestyle=:none));
+            shown += 1;
+        end
+    end
+
     theme(:default);
-    p = plot(panels...; layout=(6, 4), size=(620, 960),
+    figure = plot(panels...; layout=(6, 4), size=(620, 960),
         plot_title="Six most common mix-ups (logistic regression), four examples each",
         plot_titlefontsize=11);
-    savefig(p, joinpath(directory, "misread-digits.png"));
+    savefig(figure, joinpath(directory, "misread-digits.png"));
 end
 
 
 """
-    write_logbook(directory, testing, predicted) -> Vector{NamedTuple}
+    write_logbook(directory, testing, predicted) -> Array{Any,1}
 
 Write logbook-page.csv and logbook-page.png from data/logbook.csv. Each entry's
 digits are read from the listed testing images; a decimal point is copied, not read.
-Return one `(time, quantity, unit, value, read, match)` row per entry.
+Return one `(time, quantity, unit, value, read, match, images)` row per entry.
 """
 function write_logbook(directory, testing, predicted)
 
-    # Read the page layout and replace each digit with the digit the model read -
-    lines = readlines(LOGBOOK_PATH)[2:end];
-    page = map(lines) do line
-        time, quantity, unit, value, images... = split(line, ",");
-        numbers = parse.(Int, images);
-        digits = string.(predicted[numbers]);
-        k = 0;
-        read = join(c == '.' ? "." : digits[k += 1] for c in value);
-        (time = String(time), quantity = String(quantity), unit = String(unit),
-            value = String(value), read = read, match = read == value, images = numbers);
+    # Read each entry of the page, skipping the header line -
+    lines = readlines(LOGBOOK_PATH);
+    page = [];
+    for line in lines[2:end]
+        fields = split(line, ",");
+        time = String(fields[1]);
+        quantity = String(fields[2]);
+        unit = String(fields[3]);
+        value = String(fields[4]);           # the true reading, such as "342.5"
+        images = parse.(Int, fields[5:end]); # the testing images that hold its digits
+
+        # Build the reading: copy each decimal point, and replace each digit with the
+        # digit the model read from the next image -
+        reading = "";
+        k = 0; # images used so far
+        for c in value
+            if c == '.'
+                reading = reading * ".";
+            else
+                k += 1;
+                reading = reading * string(predicted[images[k]]);
+            end
+        end
+
+        push!(page, (time = time, quantity = quantity, unit = unit, value = value,
+            read = reading, match = (reading == value), images = images));
     end
 
-    open(joinpath(directory, "logbook-page.csv"), "w") do io
-        println(io, "time,quantity,unit,true_value,read_value,match");
-        for row in page
-            println(io, join((row.time, row.quantity, row.unit, row.value, row.read, row.match), ","));
+    # Write the table -
+    io = open(joinpath(directory, "logbook-page.csv"), "w");
+    println(io, "time,quantity,unit,true_value,read_value,match");
+    for row in page
+        println(io, join((row.time, row.quantity, row.unit, row.value, row.read, row.match), ","));
+    end
+    close(io);
+
+    # Draw each entry as its four handwritten digits side by side -
+    panels = [];
+    for row in page
+        img = picture(testing.X, row.images[1]);
+        for k in 2:length(row.images)
+            img = hcat(img, picture(testing.X, row.images[k])); # add the next digit on the right
+        end
+        label = "$(row.time) $(row.quantity) ($(row.unit))\ntrue $(row.value), read $(row.read)";
+        if row.match
+            push!(panels, draw(img; title=label, titlecolor=:black));
+        else
+            push!(panels, draw(img; title=label * "  MISREAD", titlecolor=:red));
         end
     end
 
-    # Draw each entry as its four handwritten digits side by side -
-    panels = map(page) do row
-        img = reduce(hcat, picture(testing.X, i) for i in row.images);
-        label = "$(row.time) $(row.quantity) ($(row.unit))\ntrue $(row.value), read $(row.read)";
-        draw(img; title=row.match ? label : label * "  MISREAD", titlecolor=row.match ? :black : :red);
-    end
     theme(:default);
-    p = plot(panels...; layout=(5, 4), size=(1300, 900),
+    figure = plot(panels...; layout=(5, 4), size=(1300, 900),
         plot_title="Plant logbook page, read by logistic regression (red: at least one digit misread)",
         plot_titlefontsize=12);
-    savefig(p, joinpath(directory, "logbook-page.png"));
+    savefig(figure, joinpath(directory, "logbook-page.png"));
 
     return page;
 end

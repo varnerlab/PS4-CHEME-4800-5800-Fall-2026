@@ -35,20 +35,46 @@ function load_digits(directory::String = joinpath(@__DIR__, "..", "data"))
                     "test-images.bin" => 10_000 * PIXELS, "test-labels.bin" => 10_000);
     for name in DATA_FILES
         path = joinpath(directory, name);
-        isfile(path) || error("data file $name is missing from $directory. Download the assignment again.");
-        n = filesize(path);
-        n == expected[name] || error("data file $name has $n bytes; expected $(expected[name]). Download the assignment again.");
+        if !isfile(path)
+            error("data file $name is missing from $directory. Download the assignment again.");
+        end
+        n = filesize(path); # the file size in bytes
+        if n != expected[name]
+            error("data file $name has $n bytes; expected $(expected[name]). Download the assignment again.");
+        end
     end
 
-    # Read one image set: 784 bytes per image become one row of X, plus the bias -
-    function read_set(prefix)
-        labels = Int.(read(joinpath(directory, "$prefix-labels.bin")));
-        count = length(labels);
-        bytes = Array{UInt8}(undef, PIXELS, count); # column j holds image j
-        read!(joinpath(directory, "$prefix-images.bin"), bytes);
-        X = [permutedims(Float64.(bytes)) ./ 255 ones(count)];
-        return (X = X, labels = labels);
+    # Read both image sets -
+    training = read_image_set(directory, "train");
+    testing = read_image_set(directory, "test");
+
+    return (training = training, testing = testing);
+end
+
+
+"""
+    read_image_set(directory::String, prefix::String) -> NamedTuple
+
+Read one image set, `prefix` = `"train"` or `"test"`, from the files
+`<prefix>-images.bin` and `<prefix>-labels.bin` in `directory`. Return `(X, labels)`
+as described in `load_digits`. `load_digits` checks the files before calling this.
+"""
+function read_image_set(directory::String, prefix::String)
+
+    # Read the labels: one byte per image, holding its digit -
+    label_bytes = read(joinpath(directory, "$prefix-labels.bin"));
+    labels = Int64.(label_bytes); # turn each byte into an integer
+    number_of_images = length(labels);
+
+    # Read the pixels: 784 bytes per image, from 0 (white paper) to 255 (black ink) -
+    bytes = Array{UInt8}(undef, PIXELS, number_of_images); # column i will hold image i
+    read!(joinpath(directory, "$prefix-images.bin"), bytes);
+
+    # Build the augmented data matrix: one row per image, the pixels from 0 to 1, then a 1 -
+    X = ones(number_of_images, PIXELS + 1); # the last column stays 1: the 1 for the bias
+    for i in 1:number_of_images
+        X[i, 1:PIXELS] = bytes[:, i] ./ 255; # image i, scaled so that black ink is 1
     end
 
-    return (training = read_set("train"), testing = read_set("test"));
+    return (X = X, labels = labels);
 end

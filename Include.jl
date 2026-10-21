@@ -3,8 +3,8 @@
     PlantLogbook
 
 Load the data loader, the two training functions, and the four student functions.
-`load_digits()` returns the training and testing images. `my_perceptron` and
-`my_logistic_regression` are the yes/no training functions from the L9b and L9d
+The loader, `load_digits()`, returns the training and testing images. The training
+functions, `my_perceptron` and `my_logistic_regression`, come from the L9b and L9d
 labs. The student functions and the reference solution use the same loader and
 training functions.
 Pass `--solution` after a script's filename to load `solution/src/Compute.jl`
@@ -24,10 +24,14 @@ include(joinpath(@__DIR__, "src", "Trainers.jl"));
 # For example, after creating src/MyHelpers.jl:
 # include(joinpath(@__DIR__, "src", "MyHelpers.jl"));
 # Select exactly one implementation; never fall back when the solution is absent -
-const COMPUTE_PATH = "--solution" in ARGS ?
-    joinpath(@__DIR__, "solution", "src", "Compute.jl") :
-    joinpath(@__DIR__, "src", "Compute.jl");
-isfile(COMPUTE_PATH) || error("Implementation file is missing: $COMPUTE_PATH. --solution requires the local instructor solution.");
+if "--solution" in ARGS
+    const COMPUTE_PATH = joinpath(@__DIR__, "solution", "src", "Compute.jl");
+else
+    const COMPUTE_PATH = joinpath(@__DIR__, "src", "Compute.jl");
+end
+if !isfile(COMPUTE_PATH)
+    error("Implementation file is missing: $COMPUTE_PATH. --solution requires the local instructor solution.");
+end
 include(COMPUTE_PATH);
 
 export load_digits, my_perceptron, my_logistic_regression;

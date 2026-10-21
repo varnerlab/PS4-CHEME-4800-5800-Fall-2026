@@ -12,17 +12,18 @@
 # because Julia counts from 1.
 
 # ----------------------------------------------------------------------------
-# Part 1a: Yes/no labels for one digit
+# Part 1a: Labels y = ±1 for the model of one digit
 # ----------------------------------------------------------------------------
 
 """
     digit_labels(labels::Array{Int64,1}, d::Int64) -> Array{Float64,1}
 
-Turn the digit labels into yes/no labels for one digit `d`.
+Turn the digit labels into the labels `y = ±1` for the model of digit `d`: `y = 1`
+for an image of `d` and `y = -1` for an image of any other digit.
 
 ### Arguments
 - `labels::Array{Int64,1}`: the true digit of each image, each an integer from 0 to 9.
-- `d::Int64`: the digit to label as "yes", an integer from 0 to 9.
+- `d::Int64`: the digit whose images get `y = 1`, an integer from 0 to 9.
 
 ### Returns
 A new `Array{Float64,1}` with one entry per label: `1.0` where the label is `d` and
@@ -39,7 +40,7 @@ y = digit_labels([3, 1, 3, 0], 3); # [1.0, -1.0, 1.0, -1.0]
 """
 function digit_labels(labels::Array{Int64,1}, d::Int64)
 
-    # TODO 1: Build and return the yes/no labels.
+    # TODO 1: Build and return the labels y = ±1.
 
     # Check the inputs -
     # Throw an ArgumentError for a d or a label outside 0 to 9.
@@ -59,7 +60,7 @@ end
     train_digit_models(X::Array{Float64,2}, labels::Array{Int64,1};
         method::Symbol = :logistic, maxiter::Int64) -> Array{Float64,2}
 
-Train ten yes/no models, one for each digit from 0 to 9.
+Train ten binary classifiers, one for each digit from 0 to 9.
 
 ### Arguments
 - `X::Array{Float64,2}`: the augmented data matrix, one row per image: the pixel
@@ -79,7 +80,7 @@ the bias): column 1 is the model for 0 and column 10 is the model for 9. Leave `
 and `labels` unchanged.
 
 ### Method
-For each digit `d` from 0 to 9, make the yes/no labels `y = digit_labels(labels, d)`
+For each digit `d` from 0 to 9, make the labels `y = digit_labels(labels, d)`
 and train one model with the selected training function:
 
 - logistic regression: `my_logistic_regression(X, y; α = α, maxiter = maxiter)`,
@@ -94,7 +95,7 @@ column, trained on labels that are all `-1.0`.
 ### Errors
 Throws an `ArgumentError` for a `method` other than `:logistic` or `:perceptron`, and
 a `DimensionMismatch` if `labels` does not have one entry per row of `X`. Check both
-before training. `digit_labels` and the training functions report any other bad input.
+before training. The training functions and `digit_labels` report any other bad input.
 
 ### Example
 ```julia
@@ -114,7 +115,7 @@ function train_digit_models(X::Array{Float64,2}, labels::Array{Int64,1};
     # Train one model per digit -
     # Make W with size(X, 2) rows and 10 columns; do not write 785, because the
     # tests also use tiny images with only a few pixels. For each d from 0 to 9,
-    # make the yes/no labels with digit_labels, call the training function shown
+    # make the labels y = ±1 with digit_labels, call the training function shown
     # in the Method section, and store its θ in column d + 1. For logistic
     # regression, compute α = 1/opnorm(X)^2 once, before the loop.
 
@@ -147,8 +148,9 @@ digit. Each image is read as the digit with the highest score. If two digits tie
 keep the smaller digit; Julia's `argmax` does this. Zero images give an empty
 vector. Leave `W` and `X` unchanged.
 
-For logistic regression, the highest score is also the highest probability,
-because a larger score always gives a larger probability.
+For logistic regression, the highest score also gives the highest probability that
+the image shows that digit, `σ(2β x̂ᵀθ)` with `β = 1`, because the logistic function
+`σ` is increasing.
 
 ### Errors
 Throws a `DimensionMismatch` unless `W` has `size(X, 2)` rows and 10 columns.
@@ -170,9 +172,9 @@ function predict_digits(W::Array{Float64,2}, X::Array{Float64,2})
     # X * W has one row per image and one column per digit.
 
     # Pick the digit with the highest score in each row -
-    # The highest score in column d + 1 means digit d. eachrow(S) goes through the
-    # rows of a matrix S, and argmax(v) gives the position of the largest entry of
-    # a vector v (the first one, on a tie).
+    # The highest score in column d + 1 means digit d. For a matrix S, S[i, :] is
+    # row i, and argmax(v) gives the position of the largest entry of a vector v
+    # (the first one, on a tie).
 
     error("Complete predict_digits in src/Compute.jl");
 end

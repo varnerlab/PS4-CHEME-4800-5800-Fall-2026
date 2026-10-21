@@ -1,9 +1,9 @@
 # ----------------------------------------------------------------------------
-# Training functions | The yes/no classifiers from the L9b and L9d labs.
+# Training functions | The binary classifiers from the L9b and L9d labs.
 # ----------------------------------------------------------------------------
 # These are the completed lab functions, with the same names, arguments, and
-# results. Each one trains a single yes/no model: labels are 1 for "yes" and -1
-# for "no". Two changes make them fast enough for 10,000 images; neither changes
+# results. Each one trains a single binary classifier with labels y = ±1: y = 1
+# for one class and y = -1 for the other. Two changes make them fast enough for 10,000 images; neither changes
 # the math. my_perceptron reads the images from a transposed copy of X, and
 # my_logistic_regression computes the gradient for all images at once.
 
@@ -223,7 +223,26 @@ number to the interval `(0, 1)`.
     loss_from_margins(u, θ, δ) -> Float64
 
 The regularized cross-entropy loss `Σᵢ log(1 + exp(-uᵢ)) + (δ/2)‖θ‖²`, given every
-`uᵢ = 2β yᵢ x̂ᵢᵀθ` in the vector `u`. Each term is written as
-`max(-uᵢ, 0) + log(1 + exp(-|uᵢ|))`, which has the same value but never overflows.
+`uᵢ = 2β yᵢ x̂ᵢᵀθ` in the vector `u`.
+
+For a large negative `uᵢ`, `exp(-uᵢ)` is too big for a computer number and becomes
+`Inf`. So when `uᵢ < 0`, the term is computed as `-uᵢ + log(1 + exp(uᵢ))`, which has
+the same value but only takes `exp` of a negative number.
 """
-loss_from_margins(u, θ, δ) = sum(max.(-u, 0) .+ log1p.(exp.(-abs.(u)))) + (δ/2)*dot(θ, θ)
+function loss_from_margins(u, θ, δ)
+
+    # The cross-entropy term of each example -
+    terms = zeros(length(u));
+    for i ∈ 1:length(u)
+        if u[i] < 0
+            terms[i] = -u[i] + log1p(exp(u[i])); # the same value as log(1 + exp(-uᵢ)), without overflow
+        else
+            terms[i] = log1p(exp(-u[i]));        # log1p(z) is log(1 + z), accurate for small z
+        end
+    end
+
+    # Add the terms, then the regularization term (δ/2)‖θ‖² -
+    loss = sum(terms) + (δ/2)*dot(θ, θ);
+
+    return loss;
+end

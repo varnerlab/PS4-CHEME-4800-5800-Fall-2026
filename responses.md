@@ -14,8 +14,9 @@ it to find your answer.
      column `read_as_2`). Report the two pairs and their counts.
    - **(b)** Find examples of your two pairs in `misread-digits.png` (each row
      shows one direction, such as 5 read as 3). A person reads most of these
-     digits easily. Use the score s = x̂ᵀθ (each pixel value times its weight,
-     added up over all the pixels) to explain why the model still mixes them up.
+     digits easily. Use the score x̂ᵀθ (each pixel value times its weight,
+     added up over all the pixels, plus the bias) to explain why the model still
+     mixes them up.
 
    TODO: Write your response.
 

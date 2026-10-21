@@ -25,15 +25,21 @@ follow a fixed formula, so the ten trained models differ from each other.
 """
 function toy_digits()
 
-    labels = [collect(0:9); collect(0:9); 5; 3];
+    # Every digit twice, then one more 5 and one more 3 -
+    labels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 5, 3];
     n = length(labels);
-    pixels = [mod(0.37 * i + 0.61 * j * i + 0.13 * labels[i] * j, 1.0) for i in 1:n, j in 1:3];
 
-    return (X = [pixels ones(n)], labels = labels);
+    # Fill three pixels per image from a fixed formula; the last column stays 1 for the bias -
+    X = ones(n, 4);
+    for i in 1:n
+        for j in 1:3
+            X[i, j] = mod(0.37 * i + 0.61 * j * i + 0.13 * labels[i] * j, 1.0);
+        end
+    end
+
+    return (X = X, labels = labels);
 end
 
-
-const DIGITS = Ref{Any}(nothing); # load_digits() result, read once per test suite
 
 """
     small_training(n) -> NamedTuple
@@ -42,10 +48,11 @@ Return `(X, labels)` with new copies of the first `n` training images and labels
 """
 function small_training(n)
 
-    isnothing(DIGITS[]) && (DIGITS[] = load_digits());
-    data = DIGITS[].training;
+    data = load_digits();
+    X = data.training.X[1:n, :];
+    labels = data.training.labels[1:n];
 
-    return (X = data.X[1:n, :], labels = data.labels[1:n]);
+    return (X = X, labels = labels);
 end
 
 
@@ -56,10 +63,11 @@ Return `(X, labels)` with new copies of the first `n` testing images and labels.
 """
 function testing_images(n)
 
-    isnothing(DIGITS[]) && (DIGITS[] = load_digits());
-    data = DIGITS[].testing;
+    data = load_digits();
+    X = data.testing.X[1:n, :];
+    labels = data.testing.labels[1:n];
 
-    return (X = data.X[1:n, :], labels = data.labels[1:n]);
+    return (X = X, labels = labels);
 end
 
 
@@ -72,7 +80,19 @@ end
 
 Return 1.0 where `labels` equals `d` and -1.0 elsewhere, without checking inputs.
 """
-reference_labels(labels, d) = [label == d ? 1.0 : -1.0 for label in labels];
+function reference_labels(labels, d)
+
+    y = zeros(length(labels));
+    for i in 1:length(labels)
+        if labels[i] == d
+            y[i] = 1.0;
+        else
+            y[i] = -1.0;
+        end
+    end
+
+    return y;
+end
 
 
 """
@@ -84,13 +104,15 @@ Logistic regression uses `α = 1/opnorm(X)^2`, as the README specifies.
 """
 function reference_models(X, labels; method=:logistic, maxiter)
 
-    α = 1 / opnorm(X)^2;
+    α = 1 / opnorm(X)^2; # the L9d learning rate
     W = zeros(size(X, 2), 10);
     for d in 0:9
         y = reference_labels(labels, d);
-        W[:, d + 1] = method == :logistic ?
-            my_logistic_regression(X, y; α = α, maxiter = maxiter).θ :
-            my_perceptron(X, y; maxiter = maxiter).θ;
+        if method == :logistic
+            W[:, d + 1] = my_logistic_regression(X, y; α = α, maxiter = maxiter).θ;
+        else
+            W[:, d + 1] = my_perceptron(X, y; maxiter = maxiter).θ;
+        end
     end
 
     return W;
@@ -105,12 +127,14 @@ of type `T`. Return false if no exception is thrown or the type differs.
 """
 function throws_type(f, T)
 
+    # Run f; if it throws, report whether the error has the expected type -
     try
         f();
     catch e
         return e isa T;
     end
 
+    # f finished without an error -
     return false;
 end
 

@@ -20,10 +20,12 @@ include(joinpath(@__DIR__, "src", "Reporting.jl"));
 
 
 # 2. Select the output directory -
-output_directory = "--solution" in ARGS ?
-    joinpath(@__DIR__, "solution", "outputs") : joinpath(@__DIR__, "outputs");
-
-"--solution" in ARGS && println("Running the instructor reference solution.");
+if "--solution" in ARGS
+    output_directory = joinpath(@__DIR__, "solution", "outputs");
+    println("Running the instructor reference solution.");
+else
+    output_directory = joinpath(@__DIR__, "outputs");
+end
 
 
 # 3. Train, read the testing images, and write the reports -
@@ -34,7 +36,9 @@ catch caught
     if caught isa ErrorException && startswith(caught.msg, "Complete ")
         println(stderr, "Cannot make the reports yet: ", caught.msg, ".");
         println(stderr, "Finish Parts 1 and 2 and pass testme_part_1.jl and testme_part_2.jl first.");
-        isinteractive() || exit(1); # keep an open REPL open
+        if !isinteractive() # stop the script, but keep an open REPL open
+            exit(1);
+        end
     else
         rethrow();
     end

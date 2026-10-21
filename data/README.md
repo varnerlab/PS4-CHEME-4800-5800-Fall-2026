@@ -24,7 +24,7 @@ then the second row, and so on. A byte of 0 is white paper and 255 is black ink.
 The images are stored one after another, with nothing before the first image.
 Each label is one byte.
 
-You do not need to read these files yourself. `load_digits()` in
+You do not need to read these files yourself. The function `load_digits()` in
 [src/Data.jl](../src/Data.jl) reads them, scales each pixel to a number between
 0 and 1, and adds the 1 for the bias.
 

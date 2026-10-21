@@ -16,7 +16,13 @@ Base.include(@__MODULE__, joinpath(@__DIR__, "test_support.jl"));
 using .PS4Checks; # small inputs and independent reference results
 
 """Return a 3 × 10 parameter matrix whose only nonzero column is digit `d`."""
-only_digit(d) = (W = zeros(3, 10); W[:, d + 1] .= 1.0; W);
+function only_digit(d)
+
+    W = zeros(3, 10);
+    W[:, d + 1] .= 1.0; # column d + 1 holds digit d
+
+    return W;
+end
 
 # Each case contributes one scored test, including cases whose implementation raises an error.
 X3 = [1.0 2.0 1.0; 0.5 0.1 1.0]; # two "images": two pixels and the bias
@@ -46,8 +52,13 @@ checks = [
         predict_digits(only_digit(9), X3) == [9, 9],
 
     "every digit can be predicted" => () -> begin
-        X = [[i == j ? 1.0 : 0.0 for i in 1:10, j in 1:10] ones(10)];
-        W = [[i == j ? 1.0 : 0.0 for i in 1:10, j in 1:10]; zeros(1, 10)];
+        X = zeros(10, 11); # ten images with ten pixels each, then the bias
+        W = zeros(11, 10);
+        for k in 1:10
+            X[k, k] = 1.0;  # image k has ink only in pixel k
+            X[k, 11] = 1.0; # the 1 for the bias
+            W[k, k] = 1.0;  # the model in column k scores only pixel k
+        end
 
         predict_digits(W, X) == collect(0:9)
     end,
@@ -80,12 +91,18 @@ checks = [
         data = small_training(300);
         W = reference_models(data.X, data.labels; method=:logistic, maxiter=20);
         X = testing_images(200).X;
+        scores = X * W;
+        expected = zeros(Int, 200);
+        for i in 1:200
+            expected[i] = argmax(scores[i, :]) - 1; # column d + 1 holds digit d
+        end
 
-        predict_digits(W, X) == [argmax(row) - 1 for row in eachrow(X * W)]
+        predict_digits(W, X) == expected
     end,
 
     "inputs unchanged" => () -> begin
-        W, X = only_digit(3), copy(X3);
+        W = only_digit(3);
+        X = copy(X3);
         predict_digits(W, X);
 
         W == only_digit(3) && X == X3
@@ -123,25 +140,39 @@ checks = [
     "perfect readings lie on the diagonal" => () -> begin
         labels = testing_images(500).labels;
         CM = confusion_matrix(labels, labels);
+        diagonal = 0;
+        for k in 1:10
+            diagonal += CM[k, k];
+        end
 
-        sum(CM) - sum(CM[k, k] for k in 1:10) == 0
+        sum(CM) == diagonal
     end,
 
     "total equals the number of images" => () ->
         sum(confusion_matrix([0, 3, 3, 8, 8, 8], [0, 3, 5, 8, 3, 1])) == 6,
 
     "row sums count each true digit" => () -> begin
-        actual, predicted = [0, 3, 3, 8, 8, 8], [0, 3, 5, 8, 3, 1];
-        rows = vec(sum(confusion_matrix(actual, predicted); dims=2));
+        actual = [0, 3, 3, 8, 8, 8];
+        predicted = [0, 3, 5, 8, 3, 1];
+        rows = vec(sum(confusion_matrix(actual, predicted); dims=2)); # the sum of each row
+        expected = zeros(Int, 10);
+        for d in 0:9
+            expected[d + 1] = count(actual .== d); # images whose true digit is d
+        end
 
-        rows == [count(==(d), actual) for d in 0:9]
+        rows == expected
     end,
 
     "column sums count each reading" => () -> begin
-        actual, predicted = [0, 3, 3, 8, 8, 8], [0, 3, 5, 8, 3, 1];
-        columns = vec(sum(confusion_matrix(actual, predicted); dims=1));
+        actual = [0, 3, 3, 8, 8, 8];
+        predicted = [0, 3, 5, 8, 3, 1];
+        columns = vec(sum(confusion_matrix(actual, predicted); dims=1)); # the sum of each column
+        expected = zeros(Int, 10);
+        for d in 0:9
+            expected[d + 1] = count(predicted .== d); # images read as d
+        end
 
-        columns == [count(==(d), predicted) for d in 0:9]
+        columns == expected
     end,
 
     "empty input gives all zeros" => () ->
@@ -150,12 +181,19 @@ checks = [
     "real labels against themselves" => () -> begin
         labels = testing_images(10_000).labels;
         CM = confusion_matrix(labels, labels);
+        matches = true;
+        for d in 0:9
+            if CM[d + 1, d + 1] != count(labels .== d) # every image of d read as d
+                matches = false;
+            end
+        end
 
-        [CM[k, k] for k in 1:10] == [count(==(d), labels) for d in 0:9]
+        matches
     end,
 
     "inputs unchanged" => () -> begin
-        actual, predicted = [2, 2, 7], [2, 1, 7];
+        actual = [2, 2, 7];
+        predicted = [2, 1, 7];
         confusion_matrix(actual, predicted);
 
         actual == [2, 2, 7] && predicted == [2, 1, 7]

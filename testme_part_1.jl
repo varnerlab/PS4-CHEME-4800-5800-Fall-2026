@@ -44,8 +44,15 @@ checks = [
 
     "real labels: counts match" => () -> begin
         labels = small_training(1000).labels;
+        matches = true;
+        for d in 0:9
+            y = digit_labels(labels, d);
+            if count(y .== 1.0) != count(labels .== d) # one 1.0 per image of digit d
+                matches = false;
+            end
+        end
 
-        all(count(==(1.0), digit_labels(labels, d)) == count(==(d), labels) for d in 0:9)
+        matches
     end,
 
     "empty labels give an empty vector" => () -> begin
@@ -125,7 +132,8 @@ checks = [
     end,
 
     "inputs unchanged" => () -> begin
-        X, labels = copy(toy.X), copy(toy.labels);
+        X = copy(toy.X);
+        labels = copy(toy.labels);
         train_digit_models(X, labels; method=:logistic, maxiter=5);
         train_digit_models(X, labels; method=:perceptron, maxiter=5);
 
@@ -133,7 +141,7 @@ checks = [
     end,
 
     "a digit with no images still gets a column" => () -> begin
-        labels = replace(toy.labels, 5 => 4);
+        labels = replace(toy.labels, 5 => 4); # every 5 becomes a 4, so no image is a 5
         W = train_digit_models(toy.X, labels; maxiter=30);
         θ5 = my_logistic_regression(toy.X, fill(-1.0, length(labels)); α=1/opnorm(toy.X)^2, maxiter=30).θ;
 
