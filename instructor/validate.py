@@ -72,7 +72,7 @@ assert "solution/src/Compute.jl" in manifest and "solution/responses.md" in mani
 output = run(ROOT, "solution-flag-part-1", 0, script="testme_part_1.jl", args=("--solution",))
 assert "24     24" in output
 output = run(ROOT, "solution-flag-driver", 0, script="runlogbook.jl", args=("--solution",))
-assert "Training logistic regression" in output and "done in" in output
+assert "Training logistic regression" in output and "  done" in output
 assert {p.name for p in (ROOT / "solution/outputs").iterdir()} >= REPORTS
 assert all((p.read_bytes() if p.exists() else None) == content for p, content in before.items())
 

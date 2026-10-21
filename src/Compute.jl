@@ -85,7 +85,7 @@ and train one model with the selected training function:
 
 - logistic regression: `my_logistic_regression(X, y; α = α, maxiter = maxiter)`,
   where `α = 1/opnorm(X)^2` is the L9d learning rate. Compute `α` once, before the
-  loop over digits, because `opnorm` takes a moment on 10,000 images.
+  loop over digits, because it is the same for every digit.
 - Perceptron: `my_perceptron(X, y; maxiter = maxiter)`.
 
 Store the returned `θ` in column `d + 1` of `W`. Use these calls exactly, so every
@@ -163,7 +163,7 @@ count(ŷ .== data.testing.labels) # the number of testing images read correctly
 """
 function predict_digits(W::Array{Float64,2}, X::Array{Float64,2})
 
-    # TODO 3: Return the digit with the highest score for each image.
+    # TODO 1: Return the digit with the highest score for each image.
 
     # Check the sizes -
     # W needs one row per column of X and one column per digit.
@@ -213,7 +213,7 @@ CM[5, 10] # the number of 4s read as 9
 """
 function confusion_matrix(actual::Array{Int64,1}, predicted::Array{Int64,1})
 
-    # TODO 4: Build and return the 10 × 10 confusion matrix.
+    # TODO 2: Build and return the 10 × 10 confusion matrix.
 
     # Check the inputs -
     # Check the lengths, then check that no value is outside 0 to 9.

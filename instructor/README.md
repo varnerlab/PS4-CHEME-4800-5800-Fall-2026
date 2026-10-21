@@ -76,7 +76,7 @@ checker's handling of unfinished code, partial work, syntax errors, missing
 responses, Windows line endings, runs from another folder, and reporting errors.
 Logs are in `instructor/validation-output/`; reference reports are copied to
 `instructor/reference/`. Both directories are ignored by Git and excluded from the
-student package. A full validation takes about two minutes on an Apple M3 Ultra.
+student package.
 
 To rebuild the data from the original MNIST files, run
 `python3 -I instructor/import_data.py`. It downloads the four gzip files from the

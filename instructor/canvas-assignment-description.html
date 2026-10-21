@@ -87,8 +87,7 @@ Keep the inline styles: they carry the code colors and gray backgrounds into Can
 julia --startup-file=no --project=. check_submission.jl</code></pre>
 
 <p>
-  The first command installs the packages; run it once, and expect it to take
-  several minutes. The second runs the submission checker. It runs
+  The first command installs the packages; run it once. The second runs the submission checker. It runs
   <code style="color: #c7254e; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 90%;">testme_part_1.jl</code> and <code style="color: #c7254e; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 90%;">testme_part_2.jl</code>, with 24 tests per script
   and 48 tests total.
 </p>
@@ -96,7 +95,7 @@ julia --startup-file=no --project=. check_submission.jl</code></pre>
 <p>
   The checker always writes <code style="color: #c7254e; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 90%;">MANIFEST.txt</code> and warns if answers are
   missing or still contain TODO placeholders. After the tests pass, it trains
-  both digit readers (about a minute) and saves the plots and data tables in
+  both digit readers and saves the plots and data tables in
   the <code style="color: #c7254e; background-color: #f5f5f5; padding: 2px 4px; border-radius: 3px; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 90%;">outputs</code> folder. Use them to answer the questions.
 </p>
 

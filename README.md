@@ -1,17 +1,17 @@
 # Problem Set 4 (PS4): Reading a plant logbook
 
 Every hour, an operator wrote down the reactor temperature, the pressure, and the flow rates for a chemical process over a 30-year period. 
-The plant manager now wants those records in a spreadsheet so the process engineers can study them, and optimize the process. However, nobody
+The plant manager now wants those records in a spreadsheet so the engineers can study them and optimize the process. However, nobody
 wants to type 30 years of numbers by hand, so you (as a new intern) will teach a computer to read the handwriting, one digit at a time.
 
 You'll do this by training a collection of binary classifiers on a public dataset of handwritten digits, then using them to read the logbook. 
 In Week 9, we explored two binary classifiers, models that answer a yes/no question: the Perceptron and logistic regression.
-A logbook digit has ten possible values, `0` through `9`. You will build a digit reader out of ten yes/no
-models, one for each digit, and then check how often it reads the logbook correctly.
+A logbook digit has ten possible values, `0` through `9`. You will build a digit reader out of ten binary
+classifiers, one for each digit, and then check how often it reads the logbook correctly.
 
 Each of the ten models is a linear binary classifier for one digit $d$: it
 answers the question "Is this image a $d$?". Its labels are $y=1$ for an image of $d$ and
-$y=-1$ for an image of any other digit. Thus, we will solve a multi-class classification problem using a collection of binary classifiers.
+$y=-1$ for an image of any other digit.
 
 Problem Set 4 (PS4) is due: __11:59 PM ET, Saturday, November 7, 2026__. Released October 24, 2026.
 
@@ -24,7 +24,7 @@ julia --startup-file=no --project=. -e 'using Pkg; Pkg.instantiate()'
 julia --startup-file=no --project=. check_submission.jl
 ```
 
-The first command installs the packages (several minutes). The second runs the
+The first command installs the packages. The second runs the
 48 tests, which fail until you finish Parts 1 and 2.
 
 Write your code in [src/Compute.jl](src/Compute.jl) and your answers in
@@ -38,7 +38,7 @@ written in [src/Trainers.jl](src/Trainers.jl). Do not change that file.
 ## Materials and Methods
 
 The images come from MNIST, a public collection of handwritten digits, 28 × 28
-pixels each (see [Source](#source)). Calling `data = load_digits()`
+pixels each (see [Sources](#sources)). Calling `data = load_digits()`
 ([src/Data.jl](src/Data.jl)) returns a training set and a testing set:
 
 | Field | Meaning |
@@ -96,6 +96,20 @@ y = digit_labels(labels, d); # inside the loop over d = 0, 1, ..., 9
 θ = my_perceptron(X, y; maxiter = maxiter).θ;                  # method = :perceptron
 ```
 
+Logistic regression finds $\mathbf{\theta}$ by **gradient descent**. It starts at
+$\mathbf{\theta}=\mathbf{0}$ and repeats the step
+$\mathbf{\theta}\leftarrow\mathbf{\theta}-\alpha\nabla J(\mathbf{\theta})$. Here
+$J(\mathbf{\theta})$ is the **loss**, a number that gets smaller as the model
+labels the training images better, and the gradient $\nabla J(\mathbf{\theta})$
+points in the direction in which the loss grows fastest. Each step moves
+$\mathbf{\theta}$ the opposite way, downhill. 
+
+The **learning rate** $\alpha>0$ sets the size of each step. If $\alpha$ is too large, the steps overshoot and the
+loss can grow; if it is too small, training barely moves. We use
+$\alpha=1/\Vert\mathbf{X}\Vert_{2}^{2}$, where $\Vert\mathbf{X}\Vert_{2}$, or
+`opnorm(X)` in Julia, is the largest singular value of `X`: the most that
+multiplying by `X` can stretch the length of a vector. The Perceptron has no learning rate.
+
 The keyword `maxiter` caps training: the most gradient-descent steps for logistic
 regression, or the most passes through the images for the Perceptron. As in the
 labs, either function can stop early: logistic regression when a step barely
@@ -116,7 +130,7 @@ column per digit. For logistic regression, the highest score also gives the
 highest probability $P_{\mathbf{\theta}}(y=1\mid\hat{\mathbf{x}})$, because
 $\sigma$ is increasing.
 
-A **confusion matrix**, as in the Week 9 labs, counts the reader's mistakes by
+A **confusion matrix** counts the reader's mistakes by
 type. Its rows are the true digits and its columns are the digits read: the entry
 in row `a + 1` and column `p + 1` counts the images of digit `a` read as `p`. The
 diagonal counts the correct readings; every other entry counts one kind of
@@ -124,10 +138,10 @@ mistake, such as a 4 read as a 9.
 
 Implement in [src/Compute.jl](src/Compute.jl):
 
-3. **`predict_digits(W, X)`:** returns the digit (0 to 9) with the highest score
+1. **`predict_digits(W, X)`:** returns the digit (0 to 9) with the highest score
    for each row of `X`. On a tie, keep the smaller digit, as Julia's `argmax`
    does.
-4. **`confusion_matrix(actual, predicted)`:** returns the 10 × 10 confusion
+2. **`confusion_matrix(actual, predicted)`:** returns the 10 × 10 confusion
    matrix as an `Array{Int64,2}`.
 
 The description above each function lists the remaining rules. When both
@@ -142,8 +156,7 @@ The script `runlogbook.jl` trains two digit readers on the 10,000 training
 images: logistic regression (at most 1000 steps per digit) and the Perceptron (at
 most 20 passes per digit). It reads the 10,000 testing images with both, prints
 each reader's **accuracy** (the fraction of testing digits read correctly) and a
-text copy of the logbook page, and writes these files to `outputs/` in about a
-minute:
+text copy of the logbook page, and writes these files to the `outputs/` directory:
 
 | File | Contents |
 |---|---|
@@ -167,7 +180,7 @@ julia --startup-file=no --project=. check_submission.jl
 The checker runs the 48 tests, checks that you answered all three questions, and
 writes `MANIFEST.txt`, a record of your results and files. It also deletes the
 old reports in `outputs/` and, if every test passes, makes new ones as
-`runlogbook.jl` does (about a minute more). It does not submit anything.
+`runlogbook.jl` does. It does not submit anything.
 
 Zip the whole folder, including `MANIFEST.txt` and `outputs/`, as
 `CHEME-4800-5800-PS4-<netid>.zip` (for example, `CHEME-4800-5800-PS4-abc123.zip`)
@@ -185,7 +198,7 @@ for partial credit. See [RUBRIC.md](RUBRIC.md) for the grading scale.
   or solutions. You may use Julia documentation, AI tools, and internet
   resources. You must be able to explain your code.
 
-## Source
+## Sources
 
 The digit images come from the MNIST database of handwritten digits by Yann
 LeCun, Corinna Cortes, and Christopher J. C. Burges

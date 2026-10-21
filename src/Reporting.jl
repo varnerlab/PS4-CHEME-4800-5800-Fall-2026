@@ -61,21 +61,19 @@ function write_outputs(assignment, directory)
 
     # Train logistic regression on the training images -
     println("Training logistic regression ($LOGISTIC_STEPS steps for each of the 10 digits) on ",
-        size(training.X, 1), " images. This can take a minute.");
-    start = time(); # the clock time, in seconds, when training starts
+        size(training.X, 1), " images.");
     W_logistic = assignment.train_digit_models(training.X, training.labels;
         method=:logistic, maxiter=LOGISTIC_STEPS);
     check_parameters(W_logistic, number_of_rows);
-    @printf("  done in %.1f s\n", time() - start);
+    println("  done");
 
     # Train the Perceptron on the training images -
     println("Training the Perceptron ($PERCEPTRON_PASSES passes for each of the 10 digits) on ",
-        size(training.X, 1), " images. This can take a minute.");
-    start = time();
+        size(training.X, 1), " images.");
     W_perceptron = assignment.train_digit_models(training.X, training.labels;
         method=:perceptron, maxiter=PERCEPTRON_PASSES);
     check_parameters(W_perceptron, number_of_rows);
-    @printf("  done in %.1f s\n", time() - start);
+    println("  done");
 
     # Read the testing images with both readers -
     predicted_logistic = assignment.predict_digits(W_logistic, testing.X);
