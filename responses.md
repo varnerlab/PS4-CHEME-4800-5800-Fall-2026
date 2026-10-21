@@ -25,9 +25,10 @@ it to find your answer.
    differently.
    - **(a)** Report the overall testing accuracy of each method, from the rows of
      `accuracy.csv` with digit `all`. Which method reads more digits correctly?
-   - **(b)** No straight line separates the training images of one digit from
-     all the other images. Use how each method updates its parameters on data like
-     this to explain the difference in accuracy.
+   - **(b)** For every digit, the Perceptron still makes mistakes on the training
+     images after its 20 passes: it has not found a straight line that separates
+     that digit from the others. Use how each method updates its parameters to
+     explain the difference in accuracy.
 
    TODO: Write your response.
 
