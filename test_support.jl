@@ -9,7 +9,7 @@ using LinearAlgebra; # opnorm for the logistic-regression learning rate
 
 using ..PlantLogbook; # implementation loaded by the current test suite
 
-export throws_type, reference_labels, toy_digits, small_training, testing_images, reference_models;
+export toy_digits, small_training, testing_images, reference_labels, reference_models;
 
 # ----------------------------------------------------------------------------
 # Test inputs
@@ -48,6 +48,7 @@ Return `(X, labels)` with new copies of the first `n` training images and labels
 """
 function small_training(n)
 
+    # Load the data, then copy the first n training rows -
     data = load_digits();
     X = data.training.X[1:n, :];
     labels = data.training.labels[1:n];
@@ -63,6 +64,7 @@ Return `(X, labels)` with new copies of the first `n` testing images and labels.
 """
 function testing_images(n)
 
+    # Load the data, then copy the first n testing rows -
     data = load_digits();
     X = data.testing.X[1:n, :];
     labels = data.testing.labels[1:n];
@@ -82,6 +84,7 @@ Return 1.0 where `labels` equals `d` and -1.0 elsewhere, without checking inputs
 """
 function reference_labels(labels, d)
 
+    # 1.0 for the chosen digit, -1.0 for every other digit -
     y = zeros(length(labels));
     for i in 1:length(labels)
         if labels[i] == d
@@ -104,8 +107,11 @@ Logistic regression uses `α = 1/opnorm(X)^2`, as the README specifies.
 """
 function reference_models(X, labels; method=:logistic, maxiter)
 
-    α = 1 / opnorm(X)^2; # the L9d learning rate
-    W = zeros(size(X, 2), 10);
+    # Initialize -
+    α = 1 / opnorm(X)^2;       # the L9d learning rate
+    W = zeros(size(X, 2), 10); # one column per digit
+
+    # Train one model per digit; column d + 1 holds the model for digit d -
     for d in 0:9
         y = reference_labels(labels, d);
         if method == :logistic
@@ -116,26 +122,6 @@ function reference_models(X, labels; method=:logistic, maxiter)
     end
 
     return W;
-end
-
-
-"""
-    throws_type(f, T) -> Bool
-
-Call the zero-argument function `f`. Return true only if it throws an exception
-of type `T`. Return false if no exception is thrown or the type differs.
-"""
-function throws_type(f, T)
-
-    # Run f; if it throws, report whether the error has the expected type -
-    try
-        f();
-    catch e
-        return e isa T;
-    end
-
-    # f finished without an error -
-    return false;
 end
 
 end

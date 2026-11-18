@@ -25,21 +25,18 @@ const ENTRY_DIGITS = 4; # every logbook reading has four digits
 
 Train both digit readers with the student's functions and write every report.
 
-# Arguments
-
+### Arguments
 - `assignment`: the loaded `PlantLogbook` module, including the student's four
   completed functions.
 - `directory`: the output folder; create it if needed.
 
-# Returns and files
-
+### Returns
 Return `(logistic, perceptron, digit_accuracy, entry_accuracy)`, where the first
 two are the testing accuracies and the last two describe the logbook entries read by
 logistic regression. Write or overwrite the eight files in `REPORT_FILES`. Print
 progress, both accuracies, and a text copy of the logbook page.
 
-# Errors
-
+### Errors
 Throw `ErrorException` if a student function returns results of the wrong size.
 Errors from the student functions, file writing, or plotting propagate.
 """

@@ -20,8 +20,8 @@ because DESIGN.md lists the ideas expected in the answer to question 2.
   [logbook page](reference/logbook-page.png),
   [misread digits](reference/misread-digits.png),
   [weight pictures](reference/digit-weights.png), and the CSV tables.
-- The local, Git-ignored [reference solution](../solution/README.md) contains
-  completed code and sample written responses.
+- The [reference solution](../solution/README.md) contains completed code and
+  model written responses.
 - [The student ZIP](artifacts/PS4-CHEME-4800-5800-Fall-2026-student.zip)
   contains starter code and data, with no instructor files, outputs, or solutions.
 
@@ -85,9 +85,53 @@ copy: this machine also has Fashion-MNIST files with the same names.
 
 ## Reference results
 
-The reference numbers (accuracies, most-confused pairs, and logbook results) are in the Git-ignored [solution README](../solution/README.md). They are
-the numbers students report, so they stay off GitHub until the reference solution
-is released.
+With the reference solution (at most 1000 gradient-descent steps and 20
+Perceptron passes per digit, trained on the first 10,000 MNIST training images,
+tested on all 10,000 test images):
+
+| Measure | Value |
+|---|---|
+| Logistic regression test accuracy | 0.8974 (8,974 of 10,000) |
+| Perceptron test accuracy | 0.8683 (8,683 of 10,000) |
+| Most-confused pairs, both ways (logistic) | 4 and 9: 99 (51 + 48); 3 and 5: 76 (22 + 54); 7 and 9: 71 |
+| Four-digit entries read correctly (logistic) | 0.6672 (1,668 of 2,500); 0.8974⁴ = 0.6486 |
+| Logbook page | 3 of 20 entries misread: 342.5 → 342.6 K, 1046 → 1066 kPa, 351.2 → 253.7 K |
+
+Logistic-regression test accuracy at other step counts: 0.834 after 50 steps,
+0.887 after 500, 0.897 after 1000, and 0.904 after 2000.
+
+Whole-entry accuracy (0.6672) is a little higher than (digit accuracy)⁴
+(0.6486), which suggests the mistakes cluster: some four-digit groups hold two
+or more of them.
+
+## Releasing the reference solution
+
+The reference solution stayed untracked until the initial submission deadline
+passed. It is now tracked in `solution/`; `.gitattributes` still keeps it out of
+the student source archive. Before the release, the test scripts, test support,
+and checker were rewritten without closures, one-line `||` and `&&` branches, or
+ternaries. The old and new test scripts gave identical per-case results on the
+starter, the reference, and 18 faulty implementations, and the reference tables
+are byte-identical.
+
+The [Solution release Action](../.github/workflows/solution-release.yml) runs
+[build_solution_release.py](build_solution_release.py), which builds
+`PS4-CHEME-4800-5800-Fall-2026-solution.zip`, extracts it, installs its Julia
+environment, and runs both test scripts and the submission checker on its
+contents. The ZIP puts the reference `Compute.jl` in `src/`, the model answers in
+`responses.md`, and the original starter in `starter/`. Its README comes from
+[solution-README.md](solution-README.md). The Action attaches the ZIP and its
+SHA-256 checksum to a new **draft** release whose notes come from
+[solution-release-notes.md](solution-release-notes.md).
+
+The Action runs when changes to `solution/`, the workflow, the builder, or the
+solution release text are pushed to `main`. Its tag is
+`ps4-cheme-4800-5800-2026-solutions.N`, where `N` is the workflow run number;
+**Actions → Solution release → Run workflow** accepts an explicit new tag. An
+existing tag is never overwritten. Review the draft linked in the run summary and
+publish it. To build the same ZIP locally, run
+`python3 instructor/build_solution_release.py`; the tested ZIP and checksum are
+written to the ignored `dist/` directory.
 
 ## Modeling choices
 
@@ -109,8 +153,8 @@ is released.
   `rtol = 1e-10`).
 - **1000 steps.** Plain gradient descent with this learning rate is slow to
   settle on raw pixels. 1000 steps keeps logistic regression clearly ahead of the
-  Perceptron while the checker stays fast; the solution README lists the accuracy
-  at other step counts.
+  Perceptron while the checker stays fast; the reference results above list the
+  accuracy at other step counts.
 - **The weight pictures are an extra.** With 1000 unregularized steps they are
   blotchy rather than clean digit shapes; the 0 (a red center) and 1 (a blue
   stroke) are clear. No question asks about them.
@@ -130,6 +174,6 @@ validation and build scripts. The builder refuses a release package with dates
 still marked to be announced. It uses an explicit allowlist and checks that the
 four starter errors remain in `src/Compute.jl`.
 
-The reference code, sample answers, and generated reference outputs are kept
+The reference code, model answers, and generated reference outputs are kept
 outside the student archive. Keep the MNIST attribution in
 [THIRD_PARTY_NOTICES.txt](../THIRD_PARTY_NOTICES.txt).

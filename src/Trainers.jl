@@ -3,9 +3,10 @@
 # ----------------------------------------------------------------------------
 # These are the completed lab functions, with the same names, arguments, and
 # results. Each one trains a single binary classifier with labels y = ±1: y = 1
-# for one class and y = -1 for the other. Two changes make them fast enough for 10,000 images; neither changes
-# the math. my_perceptron reads the images from a transposed copy of X, and
-# my_logistic_regression computes the gradient for all images at once.
+# for one class and y = -1 for the other. Two changes make them fast enough for
+# 10,000 images; neither changes the math. my_perceptron reads the images from a
+# transposed copy of X, and my_logistic_regression computes the gradient for all
+# images at once.
 
 """
     my_perceptron(X::Array{Float64,2}, y::Array{Float64,1};
